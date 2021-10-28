@@ -39,7 +39,7 @@ class SolarPanel():
                     "reply-to": req.get_header('REPLY-TO')
                 }
                 # allow access to the generated pdf for email attachment
-                file_url = req.url.replace("solarpanel", "static") + "/" + filename
+                file_url = req.url.replace("solar-panel", "static") + "/" + filename
                 self.send_email(pdf.content, emails, file_url)
             else:
                 raise ValueError(ERROR_PDF)
@@ -104,7 +104,6 @@ class SolarPanel():
         }
         result = None
         json_data = json.dumps(payload)
-
         try:
             result = requests.post(
                 os.environ.get('EMAIL_SERVICE_URL'),

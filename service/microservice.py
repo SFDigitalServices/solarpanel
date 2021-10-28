@@ -17,7 +17,7 @@ def start_service():
     # Initialize Falcon
     api = falcon.API()
     api.add_route('/welcome', Welcome())
-    api.add_route('/solarpanel', SolarPanel())
+    api.add_route('/solar-panel', SolarPanel())
     api.add_route('/static/{filename}', StaticResource())
     api.add_sink(default_error, '')
     return api
