@@ -1,4 +1,4 @@
-[main]
+[MAIN]
 
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
@@ -324,7 +324,8 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=100
+
+max-line-length=240
 
 # Maximum number of lines in a module.
 max-module-lines=1000
@@ -553,6 +554,7 @@ max-bool-expr=5
 
 # Maximum number of branch for function / method body.
 max-branches=12
+
 
 # Maximum number of locals for function / method body.
 max-locals=15

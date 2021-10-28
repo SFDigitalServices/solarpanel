@@ -15,6 +15,11 @@ pytest = "*"
 pytest-cov = "*"
 pre-commit = "*"
 pylint = "*"
+pytz = "*"
+pandas = "*"
+sendgrid = "*"
+toolz = "*"
+slackclient = "*"
 
 [requires]
 python_version = "3.7"

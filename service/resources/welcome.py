@@ -14,5 +14,9 @@ class Welcome():
         return Welcome message
         """
         msg = {'message': 'Welcome'}
+<<<<<<< HEAD
         resp.text = json.dumps(jsend.success(msg))
+=======
+        resp.body = json.dumps(jsend.success(msg))
+>>>>>>> 06dbc10 (First commit)
         resp.status = falcon.HTTP_200
