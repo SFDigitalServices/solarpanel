@@ -40,7 +40,7 @@ class SolarPanel():
                 }
                 # allow access to the generated pdf for email attachment
                 file_url = req.url.replace("solar-panel", "static") + "/" + filename
-                #self.send_email(emails, file_url)
+                self.send_email(emails, file_url)
             else:
                 raise ValueError(ERROR_PDF)
 
