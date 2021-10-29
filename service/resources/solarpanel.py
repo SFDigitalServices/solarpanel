@@ -23,7 +23,9 @@ class SolarPanel():
         """
         try:
             data = json.loads(req.bounded_stream.read())
-            pdf = self.get_pdf(data['request']['data'], req.get_header('TEMPLATE_FILE'))
+            print(data)
+            #pdf = self.get_pdf(data['request']['data'], req.get_header('TEMPLATE_FILE'))
+            pdf = self.get_pdf(data, req.get_header('TEMPLATE_FILE'))
             if pdf.content:
                 filename = "generated_pdf_" + str(time.time()) + ".pdf"
                 # stored the generated pdf in a tmp folder, to be removed later
@@ -40,7 +42,7 @@ class SolarPanel():
                 }
                 # allow access to the generated pdf for email attachment
                 file_url = req.url.replace("solar-panel", "static") + "/" + filename
-                self.send_email(pdf.content, emails, file_url)
+                self.send_email(emails, file_url)
             else:
                 raise ValueError(ERROR_PDF)
 
@@ -50,7 +52,7 @@ class SolarPanel():
 
         #pylint: disable=broad-except
         except Exception as exception:
-            logging.exception('Export.on_get Exception')
+            logging.exception('SolarPanel.on_post Exception')
             resp.status = falcon.HTTP_500
 
             msg_error = ERROR_GENERIC
@@ -60,7 +62,7 @@ class SolarPanel():
             resp.body = json.dumps(jsend.error(msg_error))
 
     #pylint: disable=no-self-use,too-many-locals
-    def send_email(self, pdf, emails, file_url):
+    def send_email(self, emails, file_url):
         """
         send emails applicant and staff
         """
