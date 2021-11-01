@@ -42,7 +42,7 @@ class SolarPanel():
                     # allow access to the generated pdf for email attachment
                     file_url = req.url.replace("solar-panel", "static") + "/" + filename
                     self.send_staff_email(data['request']['data'], emails, file_url)
-                    self.send_applicant_email(data['request'], emails, file_url)
+                    #self.send_applicant_email(data['request'], emails, file_url)
                 else:
                     raise ValueError(ERROR_PDF)
 
@@ -70,6 +70,14 @@ class SolarPanel():
         file_name = "Completed-SolarWS.pdf"
         payload = {
             "subject": subject,
+            "attachments": [
+                {
+                    "content": "",
+                    "path": file_url,
+                    "filename": file_name,
+                    "type": "application/pdf"
+                }
+            ],
             "to": [
                     {
                         "email": emails['to'] ,
@@ -79,15 +87,13 @@ class SolarPanel():
             "from": {
                 "email": emails['from'],
                 "name": emails.get('from_name', 'DBI Staff')
-                },
-            "attachments": [
-                {
-                    "content": "",
-                    "path": file_url,
-                    "filename": file_name,
-                    "type": "application/pdf"
-                }
-            ],
+            },
+            "content": [
+               {
+                   "type": "text/html",
+                   "value": "<html><p>Hello, world! Welcome to DS</p> </html>"
+               }
+            ]
         }
         headers = {
             'x-apikey': os.environ.get('X_APIKEY'),
@@ -140,6 +146,12 @@ class SolarPanel():
                     "type": "application/pdf"
                 }
             ],
+            "content": [
+               {
+                   "type": "text/html",
+                   "value": "<html><p>Hello, world! Welcome to DS</p> </html>"
+               }
+            ]
         }
         headers = {
             'x-apikey': os.environ.get('X_APIKEY'),

@@ -10,7 +10,7 @@ class StaticResource(object):
             with open(filename, 'rb') as f:
                 resp.body = f.read()
             # remove the file after accessed
-            os.remove(filename)
+            # os.remove(filename)
         else:
             resp.status = falcon.HTTP_500
             resp.body = "File doesn't exist!"
