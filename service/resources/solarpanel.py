@@ -23,26 +23,28 @@ class SolarPanel():
         """
         try:
             data = json.loads(req.bounded_stream.read())
-            pdf = self.get_pdf(data['request']['data'], req.get_header('TEMPLATE_FILE'))
-            if pdf.content:
-                filename = "generated_pdf_" + str(time.time()) + ".pdf"
-                # stored the generated pdf in a tmp folder, to be removed later
-                temp_file= os.path.dirname(__file__) + "/tmp/" + filename
-                #writes pdf to a local temp file because sending pdf bytes to a json stream is complicated
-                with open(temp_file, 'wb') as fd:
-                    fd.write(pdf.content)
-                    fd.close()
+            if data['request']:
+                pdf = self.get_pdf(data['request']['data'], req.get_header('TEMPLATE_FILE'))
+                if pdf.content:
+                    filename = "generated_pdf_" + str(time.time()) + ".pdf"
+                    # stored the generated pdf in a tmp folder, to be removed later
+                    temp_file= os.path.dirname(__file__) + "/tmp/" + filename
+                    #writes pdf to a local temp file because sending pdf bytes to a json stream is complicated
+                    with open(temp_file, 'wb') as fd:
+                        fd.write(pdf.content)
+                        fd.close()
 
-                emails = {
-                    "to": req.get_header('EMAIL_TO'),
-                    "from": req.get_header('EMAIL_FROM'),
-                    "reply-to": req.get_header('REPLY-TO')
-                }
-                # allow access to the generated pdf for email attachment
-                file_url = req.url.replace("solar-panel", "static") + "/" + filename
-                self.send_email(emails, file_url)
-            else:
-                raise ValueError(ERROR_PDF)
+                    emails = {
+                        "to": req.get_header('EMAIL_TO'),
+                        "from": req.get_header('EMAIL_FROM'),
+                        "reply-to": req.get_header('REPLY-TO')
+                    }
+                    # allow access to the generated pdf for email attachment
+                    file_url = req.url.replace("solar-panel", "static") + "/" + filename
+                    self.send_staff_email(data['request']['data'], emails, file_url)
+                    self.send_applicant_email(data['request'], emails, file_url)
+                else:
+                    raise ValueError(ERROR_PDF)
 
             resp.body = json.dumps(jsend.success({'message': 'success', 'responses':len(pdf.content)}))
             resp.status = falcon.HTTP_200
@@ -60,21 +62,14 @@ class SolarPanel():
             resp.body = json.dumps(jsend.error(msg_error))
 
     #pylint: disable=no-self-use,too-many-locals
-    def send_email(self, emails, file_url):
+    def send_staff_email(self, data, emails, file_url):
         """
         send emails applicant and staff
         """
         subject = "Confirmation for Solar Panel Permit Application"
         file_name = "Completed-SolarWS.pdf"
         payload = {
-            "attachments": [
-                {
-                    "content": "",
-                    "path": file_url,
-                    "filename": file_name,
-                    "type": "application/pdf"
-                }
-            ],
+            "subject": subject,
             "to": [
                     {
                         "email": emails['to'] ,
@@ -85,17 +80,14 @@ class SolarPanel():
                 "email": emails['from'],
                 "name": emails.get('from_name', 'DBI Staff')
                 },
-            "content": [
+            "attachments": [
                 {
-                    "type": "text/html",
-                    "value": "<html><p>Hello, world! Welcome to DS</p> </html>"
-                },
-                {
-                "type": "text/custom",
-                "value": "Hello world - custom type"
+                    "content": "",
+                    "path": file_url,
+                    "filename": file_name,
+                    "type": "application/pdf"
                 }
             ],
-            "subject": subject
         }
         headers = {
             'x-apikey': os.environ.get('X_APIKEY'),
@@ -109,6 +101,59 @@ class SolarPanel():
                 os.environ.get('EMAIL_SERVICE_URL'),
                 headers=headers,
                 data=json_data)
+            print(f"sent staff email {result}" )
+        except requests.exceptions.HTTPError as errh:
+            logging.exception("HTTPError: %s", errh)
+        except requests.exceptions.ConnectionError as errc:
+            logging.exception("Error Connecting: %s", errc)
+        except requests.exceptions.Timeout as errt:
+            logging.exception("Timeout Error: %s", errt)
+        except requests.exceptions.RequestException as err:
+            logging.exception("OOps: Something Else: %s", err)
+
+        return result
+
+    #pylint: disable=no-self-use,too-many-locals
+    def send_applicant_email(self, data, emails, file_url):
+        """
+        send emails applicant and staff
+        """
+        subject = "Confirmation for Solar Panel Permit Application"
+        file_name = "Completed-SolarWS.pdf"
+        payload = {
+            "subject": subject,
+            "to": [
+                    {
+                        "email": data['applicantEmail'],
+                        "name": data['applicantName']
+                    }
+                ],
+            "from": {
+                "email": emails['from'],
+                "name": emails.get('from_name', 'DBI Staff')
+                },
+            "attachments": [
+                {
+                    "content": "",
+                    "path": file_url,
+                    "filename": file_name,
+                    "type": "application/pdf"
+                }
+            ],
+        }
+        headers = {
+            'x-apikey': os.environ.get('X_APIKEY'),
+            'Content-Type': 'application/json',
+            'Accept': 'text/plain'
+        }
+        result = None
+        json_data = json.dumps(payload)
+        try:
+            result = requests.post(
+                os.environ.get('EMAIL_SERVICE_URL'),
+                headers=headers,
+                data=json_data)
+            print(f"sent applicant email {result}" )
         except requests.exceptions.HTTPError as errh:
             logging.exception("HTTPError: %s", errh)
         except requests.exceptions.ConnectionError as errc:
@@ -148,3 +193,4 @@ class SolarPanel():
             logging.exception("OOps: Something Else: %s", err)
 
         return result
+
