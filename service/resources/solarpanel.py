@@ -37,8 +37,8 @@ class SolarPanel():
                     if emails:
                         # allow access to the generated pdf for email attachment
                         file_url = req.url.replace("solar-panel", "static") + "/" + filename
-                        self.send_email(data['request']['data'], emails, file_url, 'staffs')
-                        self.send_email(data['request']['data'], emails, file_url, 'applicants')
+                        self.send_email(data['request'], emails, file_url, 'staffs')
+                        self.send_email(data['request'], emails, file_url, 'applicants')
                 else:
                     raise ValueError(ERROR_PDF)
 
@@ -63,21 +63,21 @@ class SolarPanel():
         send emails applicant and staff
         """
         template = {
-            "url": "https://sfds.blob.core.usgovcloudapi.net/staging/templates/mail/solarpanel_staff.html",
+            "url": data["staff_email_template"],
             "replacements": {
-                "data": data
+                "data": data['data']
             }
         }
-        subject = data["ContractorApplicantName"] + " applied for a solar permit at " + data["projectAddress"]
+        subject = data['data']["ContractorApplicantName"] + " applied for a solar permit at " + data['data']["projectAddress"]
         email_to = emails["staffs"]
         #applicant email
         if type == "applicants":
-            subject = "You applied for a solar permit at " + data["projectAddress"]
+            subject = "You applied for a solar permit at " + data['data']["projectAddress"]
             email_to = emails["applicants"]
             template = {
-                "url": "https://sfds.blob.core.usgovcloudapi.net/staging/templates/mail/solarpanel_applicant.html",
+                "url": data["applicant_email_template"],
                 "replacements": {
-                    "data": data
+                    "data": data['data']
                 }
             }
 
