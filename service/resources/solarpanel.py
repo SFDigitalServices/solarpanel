@@ -33,16 +33,12 @@ class SolarPanel():
                     with open(temp_file, 'wb') as fd:
                         fd.write(pdf.content)
                         fd.close()
-
-                    emails = {
-                        "to": req.get_header('EMAIL_TO'),
-                        "from": req.get_header('EMAIL_FROM'),
-                        "reply-to": req.get_header('REPLY-TO')
-                    }
-                    # allow access to the generated pdf for email attachment
-                    file_url = req.url.replace("solar-panel", "static") + "/" + filename
-                    self.send_staff_email(data['request']['data'], emails, file_url)
-                    #self.send_applicant_email(data['request'], emails, file_url)
+                    emails = self.get_emails(data['request']['emails'])
+                    if emails:
+                        # allow access to the generated pdf for email attachment
+                        file_url = req.url.replace("solar-panel", "static") + "/" + filename
+                        self.send_applicant_email(data['request']['data'], emails, file_url)
+                        self.send_staff_email(data['request']['data'], emails, file_url)
                 else:
                     raise ValueError(ERROR_PDF)
 
@@ -78,20 +74,12 @@ class SolarPanel():
                     "type": "application/pdf"
                 }
             ],
-            "to": [
-                    {
-                        "email": emails['to'] ,
-                        "name": emails.get('to_name', 'Applicant name')
-                    }
-                ],
-            "from": {
-                "email": emails['from'],
-                "name": emails.get('from_name', 'DBI Staff')
-            },
+            "to": emails["staffs"],
+            "from": emails["from"],
             "content": [
                {
                    "type": "text/html",
-                   "value": "<html><p>Hello, world! Welcome to DS</p> </html>"
+                   "value": "<html><p>Staff email</p> </html>"
                }
             ]
         }
@@ -107,7 +95,6 @@ class SolarPanel():
                 os.environ.get('EMAIL_SERVICE_URL'),
                 headers=headers,
                 data=json_data)
-            print(f"sent staff email {result}" )
         except requests.exceptions.HTTPError as errh:
             logging.exception("HTTPError: %s", errh)
         except requests.exceptions.ConnectionError as errc:
@@ -119,7 +106,7 @@ class SolarPanel():
 
         return result
 
-    #pylint: disable=no-self-use,too-many-locals
+        #pylint: disable=no-self-use,too-many-locals
     def send_applicant_email(self, data, emails, file_url):
         """
         send emails applicant and staff
@@ -128,16 +115,6 @@ class SolarPanel():
         file_name = "Completed-SolarWS.pdf"
         payload = {
             "subject": subject,
-            "to": [
-                    {
-                        "email": data['applicantEmail'],
-                        "name": data['applicantName']
-                    }
-                ],
-            "from": {
-                "email": emails['from'],
-                "name": emails.get('from_name', 'DBI Staff')
-                },
             "attachments": [
                 {
                     "content": "",
@@ -146,10 +123,12 @@ class SolarPanel():
                     "type": "application/pdf"
                 }
             ],
+            "to": emails["applicants"],
+            "from": emails["from"],
             "content": [
                {
                    "type": "text/html",
-                   "value": "<html><p>Hello, world! Welcome to DS</p> </html>"
+                   "value": "<html><p>Applicant email</p> </html>"
                }
             ]
         }
@@ -165,7 +144,6 @@ class SolarPanel():
                 os.environ.get('EMAIL_SERVICE_URL'),
                 headers=headers,
                 data=json_data)
-            print(f"sent applicant email {result}" )
         except requests.exceptions.HTTPError as errh:
             logging.exception("HTTPError: %s", errh)
         except requests.exceptions.ConnectionError as errc:
@@ -176,6 +154,33 @@ class SolarPanel():
             logging.exception("OOps: Something Else: %s", err)
 
         return result
+
+#pylint: disable=no-self-use,too-many-locals
+    def get_emails(self, emails):
+        """
+        get email information from payload
+        """
+        email_info = {}
+        if emails["from"]:
+            email_info["from"] = {
+                "email": emails["from"]["email"],
+                "name": emails["from"]["name"]
+            }
+        if emails["applicants"]:
+            email_info["applicants"] = []
+            for email in emails["applicants"]:
+                email_info["applicants"].append({
+                    "email": email["email"],
+                    "name": email["name"]
+                })
+        if emails["staffs"]:
+            email_info["staffs"] = []
+            for email in emails["staffs"]:
+                email_info["staffs"].append({
+                    "email": email["email"],
+                    "name": email["name"]
+                })
+        return email_info
 
     #pylint: disable=no-self-use,too-many-locals
     def get_pdf(self, payload, template_file_url):
@@ -188,7 +193,6 @@ class SolarPanel():
             'TEMPLATE_FILE': template_file_url,
             'Content-Type': 'application/json'
         }
-
         result = None
         try:
             result = requests.post(
