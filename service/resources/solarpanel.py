@@ -37,8 +37,8 @@ class SolarPanel():
                     if emails:
                         # allow access to the generated pdf for email attachment
                         file_url = req.url.replace("solar-panel", "static") + "/" + filename
-                        self.send_applicant_email(data['request']['data'], emails, file_url)
-                        self.send_staff_email(data['request']['data'], emails, file_url)
+                        self.send_email(data['request']['data'], emails, file_url, 'staffs')
+                        self.send_email(data['request']['data'], emails, file_url, 'applicants')
                 else:
                     raise ValueError(ERROR_PDF)
 
@@ -58,11 +58,29 @@ class SolarPanel():
             resp.body = json.dumps(jsend.error(msg_error))
 
     #pylint: disable=no-self-use,too-many-locals
-    def send_staff_email(self, data, emails, file_url):
+    def send_email(self, data, emails, file_url, type):
         """
         send emails applicant and staff
         """
-        subject = "Confirmation for Solar Panel Permit Application"
+        template = {
+            "url": "https://sfds.blob.core.usgovcloudapi.net/staging/templates/mail/solarpanel_staff.html",
+            "replacements": {
+                "data": data
+            }
+        }
+        subject = data["ContractorApplicantName"] + " applied for a solar permit at" + data["projectAddress"]
+        email_to = emails["staffs"]
+        #applicant email
+        if type == "applicants":
+            subject = "You applied for a solar permit at" + data["projectAddress"]
+            email_to = emails["applicants"]
+            template = {
+                "url": "https://sfds.blob.core.usgovcloudapi.net/staging/templates/mail/solarpanel_applicant.html",
+                "replacements": {
+                    "data": data
+                }
+            }
+
         file_name = "Completed-SolarWS.pdf"
         payload = {
             "subject": subject,
@@ -74,63 +92,9 @@ class SolarPanel():
                     "type": "application/pdf"
                 }
             ],
-            "to": emails["staffs"],
+            "to": email_to,
             "from": emails["from"],
-            "content": [
-               {
-                   "type": "text/html",
-                   "value": "<html><p>Staff email</p> </html>"
-               }
-            ]
-        }
-        headers = {
-            'x-apikey': os.environ.get('X_APIKEY'),
-            'Content-Type': 'application/json',
-            'Accept': 'text/plain'
-        }
-        result = None
-        json_data = json.dumps(payload)
-        try:
-            result = requests.post(
-                os.environ.get('EMAIL_SERVICE_URL'),
-                headers=headers,
-                data=json_data)
-        except requests.exceptions.HTTPError as errh:
-            logging.exception("HTTPError: %s", errh)
-        except requests.exceptions.ConnectionError as errc:
-            logging.exception("Error Connecting: %s", errc)
-        except requests.exceptions.Timeout as errt:
-            logging.exception("Timeout Error: %s", errt)
-        except requests.exceptions.RequestException as err:
-            logging.exception("OOps: Something Else: %s", err)
-
-        return result
-
-        #pylint: disable=no-self-use,too-many-locals
-    def send_applicant_email(self, data, emails, file_url):
-        """
-        send emails applicant and staff
-        """
-        subject = "Confirmation for Solar Panel Permit Application"
-        file_name = "Completed-SolarWS.pdf"
-        payload = {
-            "subject": subject,
-            "attachments": [
-                {
-                    "content": "",
-                    "path": file_url,
-                    "filename": file_name,
-                    "type": "application/pdf"
-                }
-            ],
-            "to": emails["applicants"],
-            "from": emails["from"],
-            "content": [
-               {
-                   "type": "text/html",
-                   "value": "<html><p>Applicant email</p> </html>"
-               }
-            ]
+            "template": template
         }
         headers = {
             'x-apikey': os.environ.get('X_APIKEY'),
