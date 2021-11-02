@@ -68,11 +68,11 @@ class SolarPanel():
                 "data": data
             }
         }
-        subject = data["ContractorApplicantName"] + " applied for a solar permit at" + data["projectAddress"]
+        subject = data["ContractorApplicantName"] + " applied for a solar permit at " + data["projectAddress"]
         email_to = emails["staffs"]
         #applicant email
         if type == "applicants":
-            subject = "You applied for a solar permit at" + data["projectAddress"]
+            subject = "You applied for a solar permit at " + data["projectAddress"]
             email_to = emails["applicants"]
             template = {
                 "url": "https://sfds.blob.core.usgovcloudapi.net/staging/templates/mail/solarpanel_applicant.html",
