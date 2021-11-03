@@ -1,0 +1,33 @@
+{
+   "request":{
+      "data":{
+         "Phone":"(415) 555-5555",
+         "Name":"test",
+         "Email":"test@test.com"
+      }
+    },
+   "staff_email_template": "[staff email template url]",
+   "applicant_email_template": "[applicant email template url]",
+   "emails": {
+   "applicants": [
+      {
+         "email": "[appllicant email]",
+         "name": "[applicant name]"
+      }
+   ],
+   "staffs": [
+      {
+         "email": "[staff1 email]",
+         "name": "[staff1]"
+      },
+      {
+         "email": "[staff2 email]",
+         "name": "staff2"
+      }
+   ],
+   "from": {
+      "email": "[from email]",
+         "name": "[from name]"
+      }
+   }
+}
