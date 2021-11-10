@@ -151,10 +151,10 @@ class SolarPanel():
         request['data']['LicenseClass'] = ", ".join(cb)
 
         # logic for applicant name/email
-        if request['data']['whatIsYourRoleInThisProject'] == 'propertyOwner':
+        if request['data']['whatIsYourRoleInThisProject'] == 'Property Owner':
             email = request['data']['ownersEmailAddress']
             name = request['data']['OwnerName']
-        elif request['data']['whatIsYourRoleInThisProject'] == 'contractor':
+        elif request['data']['whatIsYourRoleInThisProject'] == 'Contractor':
             email = request['data']['ApplicantEmailAddress']
             name = request['data']['ContractorApplicantName']
         else:
