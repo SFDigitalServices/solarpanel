@@ -4,6 +4,7 @@ import json
 import time
 import logging
 import pathlib
+import re
 import requests
 import falcon
 import jsend
@@ -26,7 +27,6 @@ class SolarPanel():
             data = json.loads(req.bounded_stream.read())
             if data['request']:
                 self.prepare_data(data['request'])
-                print(data['request'])
                 pdf = self.get_pdf(data['request']['data'], req.get_header('TEMPLATE_FILE'))
                 if pdf.content:
                     filename = "generated_pdf_" + str(time.time()) + ".pdf"
@@ -138,7 +138,11 @@ class SolarPanel():
             request['data']["structuralReview"][0]["originalName"] = project_address + "-str" + fe
 
         # flatten lists into string
-        request['data']['occupancyClass'] = ", ".join(str(x) for x in request['data']['occupancyClass'])
+        formatted_oc = []
+        for occupancy in request['data']['occupancyClass']:
+            oc = re.findall(r'[A-Z0-9a-z](?:[a-z]+|[A-Z0-9]*(?=[A-Z]|$))', occupancy)
+            formatted_oc.append(" ".join(str(x).capitalize() for x in oc))
+        request['data']['occupancyClass'] = ", ".join(str(x) for x in formatted_oc)
 
         # flatten multiple checkboxes
         cb = []
