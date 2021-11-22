@@ -4,11 +4,11 @@ import json
 import time
 import logging
 import pathlib
-import re
 import requests
 import falcon
 import jsend
 import sentry_sdk
+from datetime import datetime
 from .hooks import validate_access
 
 ERROR_GENERIC = "Bad Request"
@@ -81,11 +81,11 @@ class SolarPanel():
             template = {
                 "url": request["applicant_email_template"],
                 "replacements": {
-                    "data": request['data']
+                    "data": request
                 }
             }
 
-        file_name = "Completed-SolarWS.pdf"
+        file_name = request['data']["projectAddress"] + "-app.pdf"
         payload = {
             "subject": subject,
             "attachments": [
@@ -179,6 +179,10 @@ class SolarPanel():
 
         request['emails']['applicants'][0]['email'] = email
         request['emails']['applicants'][0]['name'] = name
+
+        # today's date
+        now = datetime.now()
+        request['submitted_on'] = now.strftime("%d/%m/%Y %I:%M %p")
 
     #pylint: disable=no-self-use,too-many-locals
     def get_emails(self, emails):
