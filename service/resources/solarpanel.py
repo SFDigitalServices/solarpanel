@@ -27,7 +27,6 @@ class SolarPanel():
             data = json.loads(req.bounded_stream.read())
             if data['request']:
                 self.prepare_data(data['request'])
-                print(data['request'])
                 pdf = self.get_pdf(data['request']['data'], req.get_header('TEMPLATE_FILE'))
                 if pdf.content:
                     filename = "generated_pdf_" + str(time.time()) + ".pdf"
@@ -37,7 +36,7 @@ class SolarPanel():
                     with open(temp_file, 'wb') as fd:
                         fd.write(pdf.content)
                         fd.close()
-                    emails = self.get_emails(data['request']['emails'])
+                    emails = self.get_emails(data['request']['emails'], data['request']['data'])
                     if emails:
                         # allow access to the generated pdf for email attachment
                         file_url = req.url.replace("solar-panel", "static") + "/" + filename
@@ -185,7 +184,7 @@ class SolarPanel():
         request['submitted_on'] = now.strftime("%d/%m/%Y %I:%M %p")
 
     #pylint: disable=no-self-use,too-many-locals
-    def get_emails(self, emails):
+    def get_emails(self, emails, data):
         """
         get email information from payload
         """
@@ -195,13 +194,27 @@ class SolarPanel():
                 "email": emails["from"]["email"],
                 "name": emails["from"]["name"]
             }
-        if emails["applicants"]:
-            email_info["applicants"] = []
-            for email in emails["applicants"]:
-                email_info["applicants"].append({
-                    "email": email["email"],
-                    "name": email["name"]
-                })
+
+        email_info["applicants"] = []
+        if data['whatIsYourRoleInThisProject'] == 'Contractor':
+            email_info["applicants"].append({
+                    "email": data["ApplicantEmailAddress"],
+                    "name": data["ContractorApplicantName"]
+                }
+            )
+        elif data['whatIsYourRoleInThisProject'] == 'Property Owner':
+            email_info["applicants"].append({
+                    "email": data["ownersEmailAddress"],
+                    "name": data["OwnerName"]
+                }
+            )
+        else:
+            email_info["applicants"].append({
+                    "email": data["yourEmail"],
+                    "name": data["yourName"]
+                }
+            )
+
         if emails["staffs"]:
             email_info["staffs"] = []
             for email in emails["staffs"]:
@@ -209,6 +222,7 @@ class SolarPanel():
                     "email": email["email"],
                     "name": email["name"]
                 })
+        print(email_info)
         return email_info
 
     #pylint: disable=no-self-use,too-many-locals
